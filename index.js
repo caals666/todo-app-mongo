@@ -1,0 +1,97 @@
+const express=require("express");
+const cookieParser=require("cookie-parser");
+const jwt=require("jsonwebtoken");
+
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+
+let CURRENT_USER_ID=1;
+let CURRENT_TODO_ID=1;
+
+const USERS=[];
+const TODOS=[];
+
+app.post("signup",(req,res)=>{
+    const username=req.body.username;
+    const password=req.body.password;
+
+    const existingUser=USERS.find((user)=>user.username===username);
+    if(existingUser){
+        return res.status(403).json({
+            message:"Username already exists"
+        })
+    }
+    USERS.push({
+        id: CURRENT_USER_ID++,
+        username: username,
+        password: password
+    })
+    res.json({
+        id: CURRENT_USER_ID-1,
+    })
+})
+
+app.post("signin",(req,res)=>{
+    const username=req.body.username;
+    const password=req.body.password;
+
+    const existingUser=USERS.find((user)=>user.username===username);
+    if(existingUser){
+        return res.status(403).json({
+            message:"Username already exists"
+        })
+    }
+
+    const token = jwt.sign({userId: existingUser.id}, "srirame");
+
+    res.cookie("token", token).json({
+        message:"Signin successful",
+        token: token
+    })
+})
+
+app.post("/todo",authMiddleware,(req,res)=>{
+    const userId=req.userId;
+    const title=req.body.title;
+    const description=req.body.description;
+
+    TODOS.push({
+        id: CURRENT_TODO_ID++,
+        userId: userId,
+        title: title,
+        description: description
+    })
+    res.json({
+        id:CURRENT_TODO_ID-1
+    })
+})
+
+app.delete("/todo",authMiddleware,(req,res)=>{
+    const userId=req.userId;
+    const todoId=parseInt(req.params.todoId);
+
+    const doesUserOwnTodo=TODOS.find(t=>t.id&&t.userId==userId)
+
+    if(doesUserOwnTodo){
+        TODOS=TODOS.filter(t=>t.id==todoId);
+        res.json({
+            message:"Deleted"
+        })
+    }
+    else{
+        res.status(411).json({
+            message:"Either todo doesn't exist or user doesn't own todo"
+        })
+    }
+})
+
+app.get("/todos",authMiddleware,(req,res)=>{
+    const userId=req.userId;
+    const userTodos=TODOS.find(t=>t.userId===userId);
+    res.json({
+        todos:userTodos
+    })
+})
+
+app.listen(3000);
