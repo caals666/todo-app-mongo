@@ -47,7 +47,10 @@ app.post("/signin",(req,res)=>{
     const username=req.body.username;
     const password=req.body.password;
 
-    const existingUser=USERS.find((user)=>user.username===username);
+    const existingUser=await userModel.findOne({
+        username:username,
+        password:password
+    })
     if(!existingUser){
         return res.status(403).json({
             message:"Username does not exist"

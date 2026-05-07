@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+require("dotenv").config()
 
-mongoose.connect("mongodb+srv://strink:e@mernapp.x6kowse.mongodb.net/todo");
+mongoose.connect("");
 
 const UserSchema = new mongoose.Schema({
     username:String,
