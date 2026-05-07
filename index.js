@@ -2,16 +2,17 @@ const express=require("express");
 const cookieParser=require("cookie-parser");
 const jwt=require("jsonwebtoken");
 const {authMiddleware}=require("./middleware.js")
+const {userModel, todoModel}=require("./models.js")
 
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-let CURRENT_USER_ID=1;
-let CURRENT_TODO_ID=1;
+// let CURRENT_USER_ID=1;
+// let CURRENT_TODO_ID=1;
 
-let USERS=[];
-let TODOS=[];
+// let USERS=[];
+// let TODOS=[];
 
 app.get("/",(req,res)=>{
     res.json({
@@ -19,24 +20,27 @@ app.get("/",(req,res)=>{
     })
 })
 
-app.post("/signup",(req,res)=>{
+app.post("/signup", async (req,res)=>{
     const username=req.body.username;
     const password=req.body.password;
 
-    const existingUser=USERS.find((user)=>user.username===username);
+    // const existingUser=USERS.find((user)=>user.username===username);
+    const existingUser=await userModel.findOne({
+        username:username,
+        password:password
+    })
     if(existingUser){
         return res.status(403).json({
             message:"Username already exists"
         })
     }
-    USERS.push({
-        id: CURRENT_USER_ID++,
-        username: username,
-        password: password
-    })
+    const newUser = await userModel.create({
+        username:username,
+        password:password
+    });
     res.json({
-        id: CURRENT_USER_ID-1,
-    })
+        id: newUser._id
+    });
 })
 
 app.post("/signin",(req,res)=>{
