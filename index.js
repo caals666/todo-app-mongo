@@ -1,6 +1,7 @@
 const express=require("express");
 const cookieParser=require("cookie-parser");
 const jwt=require("jsonwebtoken");
+const {authMiddleware}=require("./middleware.js")
 
 const app = express();
 app.use(express.json());
@@ -9,10 +10,16 @@ app.use(cookieParser());
 let CURRENT_USER_ID=1;
 let CURRENT_TODO_ID=1;
 
-const USERS=[];
-const TODOS=[];
+let USERS=[];
+let TODOS=[];
 
-app.post("signup",(req,res)=>{
+app.get("/",(req,res)=>{
+    res.json({
+        hello:"hello"
+    })
+})
+
+app.post("/signup",(req,res)=>{
     const username=req.body.username;
     const password=req.body.password;
 
@@ -32,20 +39,20 @@ app.post("signup",(req,res)=>{
     })
 })
 
-app.post("signin",(req,res)=>{
+app.post("/signin",(req,res)=>{
     const username=req.body.username;
     const password=req.body.password;
 
     const existingUser=USERS.find((user)=>user.username===username);
-    if(existingUser){
+    if(!existingUser){
         return res.status(403).json({
-            message:"Username already exists"
+            message:"Username does not exist"
         })
     }
 
     const token = jwt.sign({userId: existingUser.id}, "srirame");
 
-    res.cookie("token", token).json({
+    res.cookie("authToken", token).json({
         message:"Signin successful",
         token: token
     })
@@ -61,20 +68,21 @@ app.post("/todo",authMiddleware,(req,res)=>{
         userId: userId,
         title: title,
         description: description
+
     })
     res.json({
-        id:CURRENT_TODO_ID-1
+        message:"todo made"
     })
 })
 
-app.delete("/todo",authMiddleware,(req,res)=>{
+app.delete("/todo/:todoId",authMiddleware,(req,res)=>{
     const userId=req.userId;
     const todoId=parseInt(req.params.todoId);
 
     const doesUserOwnTodo=TODOS.find(t=>t.id&&t.userId==userId)
 
     if(doesUserOwnTodo){
-        TODOS=TODOS.filter(t=>t.id==todoId);
+        TODOS=TODOS.filter(t=>t.id===todoId&&t.userId===userId);
         res.json({
             message:"Deleted"
         })
@@ -88,7 +96,7 @@ app.delete("/todo",authMiddleware,(req,res)=>{
 
 app.get("/todos",authMiddleware,(req,res)=>{
     const userId=req.userId;
-    const userTodos=TODOS.find(t=>t.userId===userId);
+    const userTodos=TODOS.filter(t=>t.userId===userId);
     res.json({
         todos:userTodos
     })

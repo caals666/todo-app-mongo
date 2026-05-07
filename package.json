@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/caals666/todo-app-mongo#readme",
   "dependencies": {
+    "cookie-parser": "^1.4.7",
     "cookieparser": "^0.1.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3"

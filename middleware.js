@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 function authMiddleware(req, res, next) {
-    const token = req.cookies.token;
+    const token = req.cookies.authToken;
     const decoded = jwt.verify(token, "srirame");
 
     if(decoded.userId){
@@ -22,5 +22,5 @@ function authMiddleware(req, res, next) {
 }
 
 module.exports={
-    authMiddleware: authMiddleware
+    authMiddleware
 }
